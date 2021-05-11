@@ -1,0 +1,43 @@
+import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
+
+mail_data = pd.read_csv('SMSSpamCollection', sep='\t', names=['Class', 'Message'])
+
+#change the class column into digits. 0=spam and 1=ham
+mail_data.loc[mail_data['Class']=='ham', 'Class']=1
+mail_data.loc[mail_data['Class']=='spam', 'Class']=0
+
+#classify the data into feature column and class column then make train-test split
+X = mail_data['Message']
+y = mail_data['Class']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+
+#Extract features from the feature columns
+vectorizer = TfidfVectorizer(min_df=1, stop_words='english')
+x_train_vectorized = vectorizer.fit_transform(X_train)
+x_test_vectorized = vectorizer.transform(X_test)
+
+
+#Create and train/fit the classification model
+y_train = y_train.astype('int')
+model = MultinomialNB().fit(x_train_vectorized, y_train)
+
+
+#predict
+prediction = model.predict(x_test_vectorized)
+
+
+#Compute accuracy
+y_test = np.array(y_test)
+count=0
+total = len(prediction)
+
+for i in range(len(prediction)):
+    if prediction[i] == y_test[i]:
+        count +=1
+        
+print('Accuracy: ', (count/total)*100)
